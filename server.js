@@ -1,66 +1,25 @@
-import url from 'url'
-import { Server } from 'ws'
+const { WebSocketServer } = require('ws')
+const express = require("express");
 
-class Notifier {
-  constructor () {
-    this.connections = new Map()
-  }
+const webserver = express()
+  .use((req, res) =>
+    res.sendFile("/websocket-client.html", { root: __dirname })
+  )
+  .listen(3001, () => console.log(`Listening on ${3001}`));
 
-  connect (server) {
-    this.server = new Server({ noServer: true })
-    this.interval = setInterval(this.checkAll.bind(this), 10000)
-    this.server.on('close', this.close.bind(this))
-    this.server.on('connection', this.add.bind(this))
-    server.on('upgrade', (request, socket, head) => {
-      const id = url.parse(request.url, true).query.username
+const wss = new WebSocketServer({ port: 443 });
 
-      id
-        ? this.server.handleUpgrade(request, socket, head, ws => this.server.emit('connection', id, ws))
-        : socket.destroy()
-    })
-  }
+wss.on("connection", (ws) => {
+  console.log("New client connected!");
+  ws.send("connection established");
+  ws.on("close", () => console.log("Client has disconnected!"));
 
-  add (id, socket) {
-    socket.isAlive = true
-    socket.on('pong', () => socket.isAlive = true)
-    socket.on('close', this.remove.bind(this, id))
-    this.connections.set(id, socket)
-  }
+  ws.on("error", console.error);
 
-  send (id, message) {
-    const connection = this.connections.get(id)
-    
-    connection.send(JSON.stringify(message))
-  }
-
-  broadcast (message) {
-    this.connections.forEach(connection =>
-      connection.send(JSON.stringify(message))
-    )
-  }
-  
-  isAlive (id) {
-    return !!this.connections.get(id)
-  }
-
-  checkAll () {
-    this.connections.forEach(connection => {
-      if (!connection.isAlive) {
-        return connection.terminate()
-      }
-
-      connection.isAlive = false
-      connection.ping('')
-    })
-  }
-
-  remove (id) {
-    this.connections.delete(id)
-  }
-
-  close () {
-    clearInterval(this.interval)
-  }
-}
-
-export default Notifier
+  ws.on("message", (data) => {
+    sockserver.clients.forEach((client) => {
+      console.log(`distributing message: ${data}`);
+      client.send(`${data}`);
+    });
+  });
+});
