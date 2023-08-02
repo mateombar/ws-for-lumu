@@ -5,9 +5,9 @@ const webserver = express()
   .use((req, res) =>
     res.sendFile("/websocket-client.html", { root: __dirname })
   )
-  .listen(3001, () => console.log(`Listening on ${3001}`));
+  .listen(3002, () => console.log(`Listening on ${3002}`));
 
-const wss = new WebSocketServer({ port: 443 });
+const wss = new WebSocketServer({ port: 445 });
 
 wss.on("connection", (ws) => {
   console.log("New client connected!");
