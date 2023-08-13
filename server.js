@@ -7,7 +7,7 @@ const webserver = express()
   )
   .listen(3002, () => console.log(`Listening on ${3002}`));
 
-const wss = new WebSocketServer({ port: 445 });
+const wss = new WebSocketServer({ port: 443 });
 
 wss.on("connection", (ws) => {
   console.log("New client connected!");
