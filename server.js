@@ -1,15 +1,8 @@
 const { WebSocketServer } = require('ws')
-const express = require("express");
 
-const webserver = express()
-  .use((req, res) =>
-    res.sendFile("/websocket-client.html", { root: __dirname })
-  )
-  .listen(3002, () => console.log(`Listening on ${3002}`));
+const socketServer = new WebSocketServer({ port: 443 });
 
-const wss = new WebSocketServer({ port: 443 });
-
-wss.on("connection", (ws) => {
+socketServer.on("connection", (ws) => {
   console.log("New client connected!");
   ws.send("connection established");
   ws.on("close", () => console.log("Client has disconnected!"));
@@ -17,9 +10,9 @@ wss.on("connection", (ws) => {
   ws.on("error", console.error);
 
   ws.on("message", (data) => {
-    sockserver.clients.forEach((client) => {
+    socketServer.clients.forEach((client) => {
       console.log(`distributing message: ${data}`);
-      client.send(`${data}`);
+      client.send(`You thype this: ${data}`);
     });
   });
 });

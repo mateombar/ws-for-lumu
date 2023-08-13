@@ -5,28 +5,22 @@ import { useSession } from "./hooks/useSession";
 
 function App() {
   const [msg, setMsg] = useState("");
-
-  const onOpen = () => {
-    console.log("ws open xd");
-  };
-
-  const onMessage = () => {
-    console.log("ws message xd");
-  };
-
-  const onClose = () => {
-    console.log("ws close xd");
-  };
-
-  useSession(onOpen, onMessage, onClose);
-
+  const [msgList, setMsgList] = useState([]);
+  const [connection, sendMessage, closeConnection] = useSession();
+  console.log({msgList});
   const handleMsg = (e) => {
     setMsg(e.target.value);
   };
 
   const handleSendMessage = (e) => {
+    console.log("ws message");
     e.preventDefault();
+    sendMessage(msg);
     // ws.send(msg);
+  };
+
+  connection.onmessage = (event) => {
+    setMsgList([...msgList, event.data]);
   };
 
   return (
