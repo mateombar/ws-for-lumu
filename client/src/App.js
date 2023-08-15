@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
 import { Input, Button, Label, FormGroup, Container, Form } from "reactstrap";
 import { useSession } from "./hooks/useSession";
@@ -6,8 +6,14 @@ import { useSession } from "./hooks/useSession";
 function App() {
   const [msg, setMsg] = useState("");
   const [msgList, setMsgList] = useState([]);
-  const [connection, sendMessage, closeConnection] = useSession();
-  console.log({msgList});
+  const [connection, sendMessageToWS, sessionMsg] = useSession();
+
+  useEffect(()=> {
+    if (sessionMsg) {
+      setMsgList([...msgList, sessionMsg])
+    }
+  }, [sessionMsg])
+
   const handleMsg = (e) => {
     setMsg(e.target.value);
   };
@@ -15,12 +21,7 @@ function App() {
   const handleSendMessage = (e) => {
     console.log("ws message");
     e.preventDefault();
-    sendMessage(msg);
-    // ws.send(msg);
-  };
-
-  connection.onmessage = (event) => {
-    setMsgList([...msgList, event.data]);
+    sendMessageToWS(msg);
   };
 
   return (

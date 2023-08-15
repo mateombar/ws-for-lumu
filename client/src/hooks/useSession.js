@@ -1,39 +1,39 @@
 import { useEffect, useState } from "react";
 
 export const useSession = () => {
-  const ws = new WebSocket("ws://localhost:443/");
-  const [session] = useState(ws);
+  const [session, setSession] = useState(null);
+  const [msg, setMsg] = useState("");
 
-  const updateOpenHandler = () => {
-    if (!session) return;
-    session.addEventListener("open", () => {
-      console.log("ws open and connected");
-    });
-    return () => {
-      session.removeEventListener("open", () => {});
-    };
-  };
+  useEffect(() => {
+    const ws = new WebSocket("ws://localhost:443/");
+    setSession(ws);
+    onSessionOpen(ws);
+    onSessionListen(ws);
+    onSessionClose(ws);
+  }, []);
 
-  const sendMessage = (msg) => {
+  const sendMessageToWS = (msg) => {
     if (!session) return;
     session.send(msg);
   };
 
-  const updateCloseHandler = () => {
-    if (!session) return;
-    session.addEventListener("close", () => {
-      session.close();
-      console.log("ws closed");
-    });
-    return () => {
-      session.removeEventListener("close", () => {
-        console.log("removed event listenner");
-      });
+  const onSessionListen = (ws) => {
+    ws.onmessage = (event) => {
+      setMsg(event.data);
     };
   };
 
-  useEffect(updateOpenHandler, [session]);
-  // useEffect(updateCloseHandler, [session]);
+  const onSessionOpen = (ws) => {
+    ws.onopen = () => {
+      console.log("WS Connected");
+    };
+  };
 
-  return [session, sendMessage, updateCloseHandler];
+  const onSessionClose = (ws) => {
+    ws.onclose = () => {
+      console.log("WS Disconnected");
+    };
+  };
+
+  return [session, sendMessageToWS, msg];
 };
