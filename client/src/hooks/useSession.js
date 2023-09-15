@@ -2,7 +2,7 @@ import {useEffect, useState} from "react";
 
 export const useSession = () => {
   const [session, setSession] = useState(null);
-  const [msg, setMsg] = useState("");
+  const [newMsg, setNewMsg] = useState("");
   const [authToken, setAuthToken] = useState(null);
 
   useEffect(() => {
@@ -10,7 +10,6 @@ export const useSession = () => {
       let updates = {};
       updates.ws = connectToWS();
       setSession(updates);
-      console.log({updates})
       onSessionOpen(updates);
       onSessionListen(updates);
       onSessionClose(updates);
@@ -37,7 +36,8 @@ export const useSession = () => {
 
   const onSessionListen = (updates) => {
     updates.ws.onmessage = (event) => {
-      setMsg(event.data);
+      const msg = JSON.parse(event.data);
+      setNewMsg(msg);
     };
   };
 
@@ -58,5 +58,5 @@ export const useSession = () => {
     };
   };
 
-  return [session, sendAuthToken, msg];
+  return [session, sendAuthToken, newMsg];
 };
