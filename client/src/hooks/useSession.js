@@ -1,31 +1,54 @@
-import { useEffect, useState } from "react";
+import {useEffect, useState} from "react";
 
 export const useSession = () => {
   const [session, setSession] = useState(null);
   const [msg, setMsg] = useState("");
+  const [authToken, setAuthToken] = useState(null);
 
   useEffect(() => {
-    const ws = new WebSocket("ws://localhost:443/");
-    setSession(ws);
-    onSessionOpen(ws);
-    onSessionListen(ws);
-    onSessionClose(ws);
-  }, []);
+    if (authToken) {
+      let updates = {};
+      updates.ws = connectToWS();
+      setSession(updates);
+      console.log({updates})
+      onSessionOpen(updates);
+      onSessionListen(updates);
+      onSessionClose(updates);
+    }
+  }, [authToken]);
 
-  const sendMessageToWS = (msg) => {
-    if (!session) return;
-    session.send(msg);
+  const wsUrl = (path) => {
+    let url = new URL(path, window.location.href);
+    url.protocol = url.protocol.replace('http', 'ws');
+
+    let params = url.searchParams
+    params.append("access_token", authToken)
+    url.search = params.toString()
+    return url.href
+  }
+
+  const connectToWS = () => {
+    return new WebSocket(wsUrl('http://127.0.0.1/data-api/incidents/msp/open-incidents/subscribe', authToken));
+  }
+
+  const sendAuthToken = (token) => {
+    setAuthToken(token)
   };
 
-  const onSessionListen = (ws) => {
-    ws.onmessage = (event) => {
+  const onSessionListen = (updates) => {
+    updates.ws.onmessage = (event) => {
       setMsg(event.data);
     };
   };
 
-  const onSessionOpen = (ws) => {
-    ws.onopen = () => {
+  const onSessionOpen = (updates) => {
+    updates.ws.onopen = () => {
       console.log("WS Connected");
+      updates.heartbeat = setInterval(() => {
+        if (updates.ws && updates.ws.readyState === updates.ws.OPEN) {
+          updates.ws.send('Listening');
+        }
+      }, 3000);
     };
   };
 
@@ -35,5 +58,5 @@ export const useSession = () => {
     };
   };
 
-  return [session, sendMessageToWS, msg];
+  return [session, sendAuthToken, msg];
 };
